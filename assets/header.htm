@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      /* Basis-Reset für die Liste */
+      nav.main-nav ul {
+        list-style-type: none; /* Keine Aufzählungspunkte */
+        margin: 0;
+        padding-left: 0; /* Root-Level ist ganz links */
+      }
+
+      /* --- Die Einrückung (Indentation) --- */
+      /* Jedes verschachtelte <ul> bekommt linken Abstand */
+      nav.main-nav ul ul {
+        padding-left: 20px; /* Hier die Tiefe der Einrückung anpassen */
+
+        /* Optional: Eine feine Linie links für den "Tree-View"-Look */
+        border-left: 1px solid #ccc;
+        margin-left: 5px; /* Abstand zur Linie */
+      }
+
+      /* Styling für die Listenelemente */
+      nav.main-nav li {
+        margin-top: 4px;
+        position: relative;
+      }
+
+      /* Styling für Ordner-Namen (Labels) */
+      nav.main-nav strong {
+        display: block;
+        color: #555;
+        font-size: 0.9em;
+        text-transform: uppercase;
+        margin-bottom: 2px;
+        padding-left: 5px; /* Abstand zur Border-Linie */
+      }
+
+      /* Styling für Links (Dateien) */
+      nav.main-nav a {
+        text-decoration: none;
+        color: #007bff;
+        display: block; /* Macht die ganze Zeile klickbar */
+        padding: 2px 0 2px 5px;
+        transition: color 0.2s;
+      }
+
+      nav.main-nav a:hover {
+        color: #0056b3;
+        background-color: #f0f0f0; /* Hover-Effekt */
+      }
+
+      /* Der aktive Link (Logik aus dem C++ Code) */
+      nav.main-nav a.active {
+        font-weight: bold;
+        color: #d9534f; /* Rot für aktiv */
+        border-left: 3px solid #d9534f; /* Dickerer Balken links */
+        padding-left: 8px; /* Ausgleich für den Border */
+        margin-left: -1px; /* Überlappt die graue Linie */
+        background-color: #fff5f5;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Document</h1>
+    </header>
+  </body>
+</html>
