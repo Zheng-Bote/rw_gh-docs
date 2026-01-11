@@ -6,60 +6,60 @@
     <title>Document</title>
 
     <style>
-      /* Basis-Reset für die Liste */
+      /* Basic reset for the list */
       nav.main-nav ul {
-        list-style-type: none; /* Keine Aufzählungspunkte */
+        list-style-type: none; /* No bullet points */
         margin: 0;
-        padding-left: 0; /* Root-Level ist ganz links */
+        padding-left: 0; /* Root level is far left */
       }
 
-      /* --- Die Einrückung (Indentation) --- */
-      /* Jedes verschachtelte <ul> bekommt linken Abstand */
+      /* --- Indentation --- */
+      /* Every nested <ul> gets left spacing */
       nav.main-nav ul ul {
-        padding-left: 20px; /* Hier die Tiefe der Einrückung anpassen */
+        padding-left: 20px; /* Adjust indentation depth here */
 
-        /* Optional: Eine feine Linie links für den "Tree-View"-Look */
+        /* Optional: A fine line on the left for the 'Tree-View' look */
         border-left: 1px solid #ccc;
-        margin-left: 5px; /* Abstand zur Linie */
+        margin-left: 5px; /* Distance to line */
       }
 
-      /* Styling für die Listenelemente */
+      /* Styling for list items */
       nav.main-nav li {
         margin-top: 4px;
         position: relative;
       }
 
-      /* Styling für Ordner-Namen (Labels) */
+      /* Styling for folder names (labels) */
       nav.main-nav strong {
         display: block;
         color: #555;
         font-size: 0.9em;
         text-transform: uppercase;
         margin-bottom: 2px;
-        padding-left: 5px; /* Abstand zur Border-Linie */
+        padding-left: 5px; /* Distance to border line */
       }
 
-      /* Styling für Links (Dateien) */
+      /* Styling for links (files) */
       nav.main-nav a {
         text-decoration: none;
         color: #007bff;
-        display: block; /* Macht die ganze Zeile klickbar */
+        display: block; /* Makes the whole line clickable */
         padding: 2px 0 2px 5px;
         transition: color 0.2s;
       }
 
       nav.main-nav a:hover {
         color: #0056b3;
-        background-color: #f0f0f0; /* Hover-Effekt */
+        background-color: #f0f0f0; /* Hover effect */
       }
 
-      /* Der aktive Link (Logik aus dem C++ Code) */
+      /* The active link (logic from C++ code) */
       nav.main-nav a.active {
         font-weight: bold;
-        color: #d9534f; /* Rot für aktiv */
-        border-left: 3px solid #d9534f; /* Dickerer Balken links */
-        padding-left: 8px; /* Ausgleich für den Border */
-        margin-left: -1px; /* Überlappt die graue Linie */
+        color: #d9534f; /* Red for active */
+        border-left: 3px solid #d9534f; /* Thicker bar on the left */
+        padding-left: 8px; /* Compensation for the border */
+        margin-left: -1px; /* Overlaps the gray line */
         background-color: #fff5f5;
       }
     </style>

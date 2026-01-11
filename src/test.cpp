@@ -8,7 +8,7 @@
 using json = nlohmann::json;
 
 // ------------------------------------------------------------
-// Base64 (einfach, ausreichend für GitHub API)
+// Base64 (simple, sufficient for GitHub API)
 // ------------------------------------------------------------
 static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "abcdefghijklmnopqrstuvwxyz"
@@ -94,7 +94,7 @@ json http_put_json(const std::string &url, const json &body,
 }
 
 // ------------------------------------------------------------
-// Hauptprogramm
+// Main Program
 // ------------------------------------------------------------
 int main() {
   const std::string user = "<USER>";
@@ -106,7 +106,7 @@ int main() {
       "https://api.github.com/repos/" + user + "/" + repo + "/contents/docs";
 
   // --------------------------------------------------------
-  // 1. Liste aller Dateien in docs/
+  // 1. List all files in docs/
   // --------------------------------------------------------
   json files = http_get_json(api_base, token);
 
@@ -120,23 +120,23 @@ int main() {
     std::string sha = f["sha"];
     std::string download_url = f["download_url"];
 
-    std::cout << "Bearbeite: " << path << "\n";
+    std::cout << "Processing: " << path << "\n";
 
     // ----------------------------------------------------
-    // 2. Dateiinhalt herunterladen
+    // 2. Download file content
     // ----------------------------------------------------
     std::string content_raw = http_get_raw(download_url, token);
 
     // ----------------------------------------------------
-    // 3. Inhalt verändern
+    // 3. Modify content
     // ----------------------------------------------------
     std::string newContent = content_raw + "\n\n<!-- Updated by C++ bot -->\n";
 
     // ----------------------------------------------------
-    // 4. Datei zurückschreiben
+    // 4. Write file back
     // ----------------------------------------------------
     json body;
-    body["message"] = "Automatisches Update von " + path;
+    body["message"] = "Automatic update of " + path;
     body["content"] = base64_encode(newContent);
     body["sha"] = sha;
     body["branch"] = branch;
@@ -149,6 +149,6 @@ int main() {
     std::cout << "→ Commit: " << result["commit"]["sha"] << "\n\n";
   }
 
-  std::cout << "Fertig.\n";
+  std::cout << "Done.\n";
   return 0;
 }

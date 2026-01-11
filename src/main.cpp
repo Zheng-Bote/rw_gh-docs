@@ -1,7 +1,7 @@
 // main.cpp
-// C++23 — Liest alle docs/YYYY/*.md aus einem GitHub-Repo, extrahiert Header
-// zwischen --- und gibt die Felder aus. Benötigt: libcurl, nlohmann::json
-// (FetchContent in CMake). .env im Arbeitsverzeichnis mit GITHUB_USER,
+// C++23 — Reads all docs/YYYY/*.md from a GitHub repo, extracts headers
+// between --- and outputs the fields. Requires: libcurl, nlohmann::json
+// (FetchContent in CMake). .env in working directory with GITHUB_USER,
 // GITHUB_REPO, GITHUB_TOKEN, optional BRANCH.
 
 #include <curl/curl.h>
@@ -162,7 +162,7 @@ std::optional<json> http_get_json(const std::string &url,
 
 // -------------------- Header parsing --------------------
 std::map<std::string, std::string> parse_front_matter(const std::string &text) {
-  // Erwartet YAML-ähnlichen Header zwischen '---' am Anfang und dem nächsten
+  // Expects YAML-like header between '---' at the beginning and the next
   // '---'
   std::map<std::string, std::string> result;
   size_t pos = 0;
@@ -172,7 +172,7 @@ std::map<std::string, std::string> parse_front_matter(const std::string &text) {
   if (pos >= text.size())
     return result;
   if (text.compare(pos, 3, "---") != 0)
-    return result; // kein Header
+    return result; // no header
   pos += 3;
   // skip possible newline after first ---
   if (pos < text.size() && (text[pos] == '\r' || text[pos] == '\n')) {
@@ -230,29 +230,29 @@ int main(int argc, char **argv) {
   std::string branch = get_env("BRANCH", "main");
 
   if (user.empty() || repo.empty() || token.empty()) {
-    std::cerr << "Fehlende Konfiguration in .env. Bitte setze GITHUB_USER, "
+    std::cerr << "Missing configuration in .env. Please set GITHUB_USER, "
                  "GITHUB_REPO, GITHUB_TOKEN\n";
     curl_global_cleanup();
     return 1;
   }
 
-  // 1) Liste der Einträge in docs/
+  // 1) List entries in docs/
   std::string api_docs =
       "https://api.github.com/repos/" + user + "/" + repo + "/contents/docs";
   auto docs_list_opt = http_get_json(api_docs, token);
   if (!docs_list_opt.has_value()) {
-    std::cerr << "Konnte docs/ nicht abrufen.\n";
+    std::cerr << "Could not fetch docs/.\n";
     curl_global_cleanup();
     return 1;
   }
   json docs_list = *docs_list_opt;
   if (!docs_list.is_array()) {
-    std::cerr << "Erwartete Array für docs/ Inhalt.\n";
+    std::cerr << "Expected array for docs/ content.\n";
     curl_global_cleanup();
     return 1;
   }
 
-  // Für jeden Eintrag in docs/ prüfen, ob es ein Verzeichnis YYYY ist
+  // For each entry in docs/, check if it is a directory YYYY
   for (auto &entry : docs_list) {
     if (!entry.is_object())
       continue;
@@ -260,7 +260,7 @@ int main(int argc, char **argv) {
     std::string name = entry.value("name", "");
     if (type != "dir")
       continue;
-    // optional: prüfen ob name vierstellige Jahreszahl
+    // optional: check if name is a 4-digit year
     bool is_year =
         (name.size() == 4) && std::all_of(name.begin(), name.end(), ::isdigit);
     if (!is_year)
@@ -270,7 +270,7 @@ int main(int argc, char **argv) {
                              repo + "/contents/docs/" + name;
     auto sub_list_opt = http_get_json(subdir_api, token);
     if (!sub_list_opt.has_value()) {
-      std::cerr << "Konnte Verzeichnis docs/" << name << " nicht abrufen.\n";
+      std::cerr << "Could not fetch directory docs/" << name << " .\n";
       continue;
     }
     json sub_list = *sub_list_opt;
@@ -290,23 +290,23 @@ int main(int argc, char **argv) {
         continue;
 
       std::string path = file_entry.value("path", "");
-      std::cout << "Bearbeite: " << path << "\n";
+      std::cout << "Processing: " << path << "\n";
 
-      // 2) Hole Datei-Metadaten (enthält base64 content und sha)
+      // 2) Get file metadata (contains base64 content and sha)
       std::string file_api = "https://api.github.com/repos/" + user + "/" +
                              repo + "/contents/" + path;
       auto file_json_opt = http_get_json(file_api, token);
       if (!file_json_opt.has_value()) {
-        std::cerr << "Konnte Datei-Metadaten nicht abrufen: " << path << "\n";
+        std::cerr << "Could not fetch file metadata: " << path << "\n";
         continue;
       }
       json file_json = *file_json_opt;
       if (!file_json.contains("content")) {
-        std::cerr << "Keine content-Angabe für " << path << "\n";
+        std::cerr << "No content found for " << path << "\n";
         continue;
       }
       std::string content_b64 = file_json.value("content", "");
-      // Entferne Zeilenumbrüche in base64
+      // Remove newlines in base64
       content_b64.erase(std::remove_if(content_b64.begin(), content_b64.end(),
                                        [](unsigned char c) {
                                          return c == '\n' || c == '\r';
@@ -317,19 +317,19 @@ int main(int argc, char **argv) {
       // 3) Parse Front Matter
       auto header = parse_front_matter(content_raw);
       if (header.empty()) {
-        std::cout << "Kein Front Matter gefunden in " << path << "\n\n";
+        std::cout << "No Front Matter found in " << path << "\n\n";
         continue;
       }
 
-      // 4) Ausgabe via println (std::cout)
-      // Gewünschte Felder: TITLE, DESCRIPTION, AUTHOR, CREATED, LAST_MODIFIED,
+      // 4) Output via println (std::cout)
+      // Desired fields: TITLE, DESCRIPTION, AUTHOR, CREATED, LAST_MODIFIED,
       // TARGET_DATE
       auto print_field = [&](const std::string &key) {
         auto it = header.find(key);
         if (it != header.end()) {
           std::cout << key << ": " << it->second << "\n";
         } else {
-          std::cout << key << ": " << "(nicht vorhanden)" << "\n";
+          std::cout << key << ": " << "(not present)" << "\n";
         }
       };
 
@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  std::cout << "Alle Dateien verarbeitet.\n";
+  std::cout << "All files processed.\n";
   curl_global_cleanup();
   return 0;
 }
