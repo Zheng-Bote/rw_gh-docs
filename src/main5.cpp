@@ -30,7 +30,7 @@
 #include <vector>
 
 // Libraries
-#include <inja/inja.hpp>
+#include <inja.hpp>
 #include <md4c-html.h>
 #include <nlohmann/json.hpp>
 
