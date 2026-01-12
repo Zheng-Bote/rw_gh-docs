@@ -1,4 +1,6 @@
-# folder1
+# index
+
+**Welcome to my GitHub Pages site!**
 
 <!-- START doctoc -->   // fix position of TOC; otherwise on top of markdown file
 
@@ -6,4 +8,4 @@
 
 ## Description
 
-das ist folder 1
+das ist die Startseite
