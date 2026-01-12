@@ -5,21 +5,20 @@
  */
 
 /**
- * @file main2.cpp
- * @brief Static Site Generator (SSG)
+ * @file main4.cpp
+ * @brief Static Site Generator (Version 4 with Inja Templates)
  *
- * A tool to convert a directory of Markdown and HTML files into a static
- * website. It recursively scans an input directory, converts Markdown to HTML
- * using md4c, generates a context-aware navigation tree, and wraps content with
- * a configurable HTML header and footer.
+ * This version integrates the 'inja' template engine to separate logic and
+ * view. It builds a directory tree of Markdown files, renders them to HTML, and
+ * merges them with a central HTML template.
  *
  * Dependencies:
  * - md4c (Markdown processing)
+ * - nlohmann/json (JSON data for Inja)
+ * - pantor/inja (Template engine)
  *
- * Compile Example:
- * macOS: clang++ -std=c++23 -o ssg main2.cpp -I/opt/homebrew/include
- * -L/opt/homebrew/lib -lmd4c-html -lmd4c Linux: g++ -std=c++23 -o ssg main2.cpp
- * -lmd4c-html -lmd4c
+ * Compile:
+ * g++ -std=c++23 -o ssg main4.cpp -lmd4c-html -lmd4c
  */
 
 #include <algorithm>
@@ -31,40 +30,41 @@
 #include <string>
 #include <vector>
 
-// Include MD4C Header (must be installed)
+// Libs
+#include <inja/inja.hpp>
 #include <md4c-html.h>
+#include <nlohmann/json.hpp>
 
 namespace fs = std::filesystem;
+using json = nlohmann::json;
 
 // --- Structures ---
 
 /**
- * @brief Configuration structure for the SSG.
+ * @brief Configuration structure.
  */
 struct Config {
-  fs::path headerPath; ///< Path to the header HTML file.
-  fs::path footerPath; ///< Path to the footer HTML file.
+  fs::path templatePath; ///< Path to the Inja template file.
   fs::path outputDir =
-      "output_site"; ///< Directory where the generated site will be saved.
+      "output_site"; ///< Directory where the site is generated.
 };
 
 /**
- * @brief Represents a directory node in the file tree.
+ * @brief Directory node structure.
  */
 struct DirNode {
-  fs::path relativePath;        ///< Path relative to the root input directory.
+  fs::path relativePath;        ///< Path relative to root.
   std::string dirName;          ///< Name of the directory.
-  std::vector<fs::path> files;  ///< List of files in the directory.
+  std::vector<fs::path> files;  ///< List of files in this directory.
   std::vector<DirNode> subdirs; ///< List of subdirectories.
 };
 
-// --- IO Helper Functions ---
+// --- Helper ---
 
 /**
- * @brief Reads the entire content of a file.
- * @param path The path to the file.
- * @return The file content as a string.
- * @throws std::runtime_error If the file cannot be read.
+ * @brief Reads the contents of a file.
+ * @param path Path to the file.
+ * @return File content.
  */
 std::string readFile(const fs::path &path) {
   std::ifstream in(path, std::ios::in | std::ios::binary);
@@ -78,9 +78,8 @@ std::string readFile(const fs::path &path) {
 
 /**
  * @brief Writes content to a file.
- * @param path The path to the file.
- * @param content The content to write.
- * @throws std::runtime_error If the file cannot be written.
+ * @param path Path to the file.
+ * @param content Content to write.
  */
 void writeFile(const fs::path &path, std::string_view content) {
   std::ofstream out(path, std::ios::out | std::ios::binary);
@@ -90,13 +89,10 @@ void writeFile(const fs::path &path, std::string_view content) {
   out << content;
 }
 
-// --- Markdown Logic (MD4C Callback) ---
+// --- Markdown Logic ---
 
 /**
- * @brief Callback function acting as a sink for MD4C HTML output.
- * @param text The text chunk.
- * @param size The size of the chunk.
- * @param userdata Pointer to the user data (std::string*).
+ * @brief MD4C callback.
  */
 void md_process_output(const MD_CHAR *text, MD_SIZE size, void *userdata) {
   std::string *out = static_cast<std::string *>(userdata);
@@ -104,28 +100,25 @@ void md_process_output(const MD_CHAR *text, MD_SIZE size, void *userdata) {
 }
 
 /**
- * @brief Renders Markdown content to HTML.
- * @param mdContent The Markdown content.
- * @return The rendered HTML string.
- * @throws std::runtime_error If parsing fails.
+ * @brief Renders Markdown to HTML.
+ * @param mdContent Markdown string.
+ * @return HTML string.
  */
 std::string renderMarkdown(const std::string &mdContent) {
   std::string htmlOutput;
-  // MD_DIALECT_GITHUB enables GitHub Flavored Markdown (tables, tasklists etc.)
   int ret = md_html(mdContent.c_str(), static_cast<MD_SIZE>(mdContent.size()),
                     md_process_output, &htmlOutput, MD_DIALECT_GITHUB, 0);
-
-  if (ret != 0) {
+  if (ret != 0)
     throw std::runtime_error("Markdown parsing failed.");
-  }
   return htmlOutput;
 }
 
+// --- Config Parser ---
+
 /**
  * @brief Parses the configuration file.
- * @param configPath The path to the configuration file.
- * @return An initialized Config structure.
- * @throws std::runtime_error If the config file is not found.
+ * @param configPath Path to config file.
+ * @return Config object.
  */
 Config parseConfig(const fs::path &configPath) {
   Config cfg;
@@ -138,10 +131,12 @@ Config parseConfig(const fs::path &configPath) {
     if (delimiterPos != std::string::npos) {
       std::string key = line.substr(0, delimiterPos);
       std::string value = line.substr(delimiterPos + 1);
-      if (key == "header")
-        cfg.headerPath = value;
-      else if (key == "footer")
-        cfg.footerPath = value;
+
+      // Trim Whitespaces (optional but good practice)
+      // ... (simplified here without trim)
+
+      if (key == "template")
+        cfg.templatePath = value;
       else if (key == "output")
         cfg.outputDir = value;
     }
@@ -149,13 +144,13 @@ Config parseConfig(const fs::path &configPath) {
   return cfg;
 }
 
-// --- Logic: Build Tree ---
+// --- Logic: Build Tree (MD only) ---
 
 /**
- * @brief Recursively builds a directory tree structure.
- * @param currentPath The current directory path.
- * @param rootPath The root input directory path.
- * @return A constructed DirNode representing the current directory.
+ * @brief Builds the directory tree, filtering for .md files.
+ * @param currentPath Current scanning path.
+ * @param rootPath Root input path.
+ * @return DirNode structure.
  */
 DirNode buildTree(const fs::path &currentPath, const fs::path &rootPath) {
   DirNode node;
@@ -168,23 +163,21 @@ DirNode buildTree(const fs::path &currentPath, const fs::path &rootPath) {
     if (entry.is_directory()) {
       node.subdirs.push_back(buildTree(entry.path(), rootPath));
     } else if (entry.is_regular_file()) {
-      // Check for .htm AND .md
-      auto ext = entry.path().extension();
-      if (ext == ".htm" || ext == ".md") {
+      // ADAPTATION 1: Only .md files
+      if (entry.path().extension() == ".md") {
         node.files.push_back(entry.path().filename());
       }
     }
   }
-
   std::ranges::sort(node.subdirs, {}, &DirNode::dirName);
   std::ranges::sort(node.files);
   return node;
 }
 
 /**
- * @brief Generates a relative backpath string (e.g., "../../").
- * @param currentRelPath The current relative path.
- * @return The backpath string.
+ * @brief Generates back references (../) for relative paths.
+ * @param currentRelPath Current relative path.
+ * @return String with "../" sequences.
  */
 std::string getBackPrefix(const fs::path &currentRelPath) {
   std::string prefix = "";
@@ -194,48 +187,45 @@ std::string getBackPrefix(const fs::path &currentRelPath) {
   return prefix;
 }
 
-// --- Helper Function: Extension Swap ---
-
 /**
- * @brief Converts a filename's extension from .md to .html.
- * @param sourceFile The original filename.
- * @return The filename with the target extension.
+ * @brief Converts filename extension from .md to .html.
+ * @param sourceFile Source filename.
+ * @return Target filename.
  */
 fs::path getTargetFilename(const fs::path &sourceFile) {
   fs::path p = sourceFile;
-  if (p.extension() == ".md") {
+  // Since we only read MD, we always replace
+  if (p.extension() == ".md")
     p.replace_extension(".html");
-  }
   return p;
 }
 
 // --- Navigation Generator ---
 
 /**
- * @brief Generates the navigation HTML for the sidebar.
- * @param currentNode The current node in the directory tree.
- * @param html The string to append the HTML to.
- * @param urlPrefix The prefix for URLs (relative backpath).
- * @param activeTargetFile The path of the currently active file (for
- * highlighting).
+ * @brief Generates Navigation HTML.
+ *
+ * We allow C++ to handle recursion and structure logic, passing the final HTML
+ * string to the Inja template.
+ *
+ * @param currentNode Current node.
+ * @param html Output HTML string.
+ * @param urlPrefix URL prefix.
+ * @param activeTargetFile Active file for highlighting.
  */
 void generateNavHtml(const DirNode &currentNode, std::string &html,
                      const std::string &urlPrefix,
                      const fs::path &activeTargetFile) {
 
-  html += "<ul>\n";
+  html += "<ul class=\"nav-list\">\n";
 
-  // 1. Files
+  // Files
   for (const auto &file : currentNode.files) {
     std::string nameNoExt = file.stem().string();
-
-    // IMPORTANT: Link always points to the target format (.html for .md files)
     fs::path targetFile = getTargetFilename(file);
     fs::path fullLinkPath = currentNode.relativePath / targetFile;
-
     std::string href = urlPrefix + fullLinkPath.generic_string();
 
-    // Active check compares target filenames
     std::string classAttr =
         (fullLinkPath == activeTargetFile) ? " class=\"active\"" : "";
 
@@ -243,23 +233,19 @@ void generateNavHtml(const DirNode &currentNode, std::string &html,
                         nameNoExt);
   }
 
-  // 2. Subdirectories
+  // Subdirectories
   for (const auto &sub : currentNode.subdirs) {
     size_t fileCount = sub.files.size();
-
     if (fileCount == 1) {
-      // Helper: If directory has only 1 file, link directly
       fs::path targetFile = getTargetFilename(sub.files[0]);
       fs::path linkPath = sub.relativePath / targetFile;
       std::string href = urlPrefix + linkPath.generic_string();
-
       std::string classAttr =
           (linkPath == activeTargetFile) ? " class=\"active\"" : "";
 
       html += std::format("  <li><a href=\"{}\"{}>{}</a></li>\n", href,
                           classAttr, sub.dirName);
     } else {
-      // Recursive call for subdirectories with multiple files
       html += std::format("  <li><strong>{}</strong>\n", sub.dirName);
       generateNavHtml(sub, html, urlPrefix, activeTargetFile);
       html += "  </li>\n";
@@ -268,70 +254,66 @@ void generateNavHtml(const DirNode &currentNode, std::string &html,
   html += "</ul>\n";
 }
 
-// --- Processing ---
+// --- Processing with Inja ---
 
 /**
- * @brief Processes files recursively to generate HTML output.
- * @param currentNode The current directory node being processed.
- * @param rootNode The root content node (for navigation generation).
- * @param inputRoot The root input directory.
- * @param cfg The configuration object.
- * @param headerContent Content of the header file.
- * @param footerContent Content of the footer file.
+ * @brief Processes files using Inja templates.
+ * @param currentNode Current node.
+ * @param rootNode Root node.
+ * @param inputRoot Input root.
+ * @param cfg Config.
+ * @param env Inja environment.
+ * @param tmpl Parsed Inja template.
  */
 void processFiles(const DirNode &currentNode, const DirNode &rootNode,
                   const fs::path &inputRoot, const Config &cfg,
-                  const std::string &headerContent,
-                  const std::string &footerContent) {
+                  inja::Environment &env, const inja::Template &tmpl) {
 
   fs::path currentOutputDir = cfg.outputDir / currentNode.relativePath;
   fs::create_directories(currentOutputDir);
+
+  // Prefix for links (e.g. "../../") for CSS etc.
   std::string backPrefix = getBackPrefix(currentNode.relativePath);
 
   for (const auto &file : currentNode.files) {
     fs::path inputPath = inputRoot / currentNode.relativePath / file;
-
-    // Calculate target filename (.md -> .html)
     fs::path targetFilename = getTargetFilename(file);
     fs::path outputPath = currentOutputDir / targetFilename;
-
-    // Active status refers to the target file (HTML structure)
     fs::path currentActiveFile = currentNode.relativePath / targetFilename;
 
-    // Generate Nav
-    std::string contextAwareNav;
-    generateNavHtml(rootNode, contextAwareNav, backPrefix, currentActiveFile);
-    std::string fullNav =
-        "<nav class='main-nav'>\n" + contextAwareNav + "</nav>\n";
+    // 1. Generate Navigation HTML
+    std::string navHtml;
+    generateNavHtml(rootNode, navHtml, backPrefix, currentActiveFile);
 
-    // Read content & convert if necessary
+    // 2. Read and Render Markdown
     std::string rawContent = readFile(inputPath);
-    std::string processedContent;
+    std::string htmlContent = renderMarkdown(rawContent);
 
-    if (inputPath.extension() == ".md") {
-      processedContent = renderMarkdown(rawContent);
-      std::println("Markdown processed: {}", file.string());
-    } else {
-      processedContent = rawContent; // .htm stays as is
+    // 3. ADAPTATION 2: Prepare data for Inja
+    json data;
+    data["base_path"] = backPrefix;       // For CSS Links
+    data["title"] = file.stem().string(); // Page Title
+    data["navigation"] = navHtml;         // The generated list
+    data["content"] = htmlContent;        // The actual content
+
+    // 4. Merge with Template
+    try {
+      std::string finalResult = env.render(tmpl, data);
+      writeFile(outputPath, finalResult);
+      std::println("Created: {}", outputPath.string());
+    } catch (const std::exception &e) {
+      std::println(stderr, "Template Error in {}: {}", file.string(), e.what());
     }
-
-    std::string finalHtml = headerContent + "\n" + fullNav + "\n<main>\n" +
-                            processedContent + "\n</main>\n" + footerContent;
-
-    writeFile(outputPath, finalHtml);
-    std::println("Created: {}", outputPath.string());
   }
 
+  // Recursion
   for (const auto &sub : currentNode.subdirs) {
-    processFiles(sub, rootNode, inputRoot, cfg, headerContent, footerContent);
+    processFiles(sub, rootNode, inputRoot, cfg, env, tmpl);
   }
 }
 
 /**
- * @brief Main entry point of the SSG.
- * @param argc Argument count.
- * @param argv Argument vector.
- * @return 0 on success, 1 on failure.
+ * @brief Main entry point.
  */
 int main(int argc, char *argv[]) {
   if (argc < 3) {
@@ -343,22 +325,31 @@ int main(int argc, char *argv[]) {
   fs::path inputDir = argv[2];
 
   try {
+    // Load config
     Config cfg = parseConfig(configPath);
-    std::string header = readFile(cfg.headerPath);
-    std::string footer = readFile(cfg.footerPath);
 
     if (!fs::exists(inputDir))
       throw std::runtime_error("Input folder does not exist.");
+    if (!fs::exists(cfg.templatePath))
+      throw std::runtime_error("Template file does not exist.");
 
-    std::println("Scanning structure (htm & md)...");
+    // Build tree
+    std::println("Scanning structure (.md only)...");
     DirNode rootNode = buildTree(inputDir, inputDir);
 
+    // Prepare output
     if (fs::exists(cfg.outputDir))
       fs::remove_all(cfg.outputDir);
     fs::create_directories(cfg.outputDir);
 
-    std::println("Generating pages...");
-    processFiles(rootNode, rootNode, inputDir, cfg, header, footer);
+    // Initialize Inja Environment
+    std::println("Loading template...");
+    inja::Environment env;
+    // Parse template once for performance
+    inja::Template tmpl = env.parse_template(cfg.templatePath.string());
+
+    std::println("Generating pages with Inja...");
+    processFiles(rootNode, rootNode, inputDir, cfg, env, tmpl);
 
     std::println("Done! Output in: {}", cfg.outputDir.string());
 

@@ -1,0 +1,55 @@
+name: Manual SSG5 Build
+
+run-name: Manual SSG5 Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-generate:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libmd4c-dev nlohmann-json3-dev libinja-dev
+
+      - name: Compile SSG5
+        run: |
+          g++ -std=c++23 -o ssg5 src/main5.cpp -lmd4c-html -lmd4c
+          chmod +x ssg5
+
+      - name: Create Config
+        run: |
+          echo "template=assets4/template.html" > config.cfg
+          echo "output=public" >> config.cfg
+
+      - name: Run Static Site Generator
+        run: |
+          ./ssg5 config.cfg input
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: static-site
+          path: public/
+
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: public
+
+      - name: Deploy to main (public folder)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: main
+          folder: public
+          target-folder: public

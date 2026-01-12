@@ -1,8 +1,21 @@
-// main.cpp
-// C++23 — Reads all docs/YYYY/*.md from a GitHub repo, extracts headers
-// between --- and outputs the fields. Requires: libcurl, nlohmann::json
-// (FetchContent in CMake). .env in working directory with GITHUB_USER,
-// GITHUB_REPO, GITHUB_TOKEN, optional BRANCH.
+/*
+ * SPDX-License-Identifier: MIT
+ * Author: Robert Zheng
+ * Copyright (c) 2026 ZHENG Robert
+ */
+
+/**
+ * @file main.cpp
+ * @brief Github Docs Fetcher
+ *
+ * C++23 application that connects to a GitHub repository to retrieve
+ * documentation files. It filters for directories named with a 4-digit year
+ * (YYYY), downloads .md files, and extracts their "Front Matter" metadata.
+ *
+ * Dependencies:
+ * - libcurl (Network requests)
+ * - nlohmann/json (JSON parsing)
+ */
 
 #include <curl/curl.h>
 #include <nlohmann/json.hpp>
@@ -22,6 +35,12 @@ using json = nlohmann::json;
 namespace fs = std::filesystem;
 
 // -------------------- Utility --------------------
+
+/**
+ * @brief Trims leading and trailing whitespace from a string.
+ * @param s The input string.
+ * @return The trimmed string.
+ */
 static std::string trim(const std::string &s) {
   size_t a = 0;
   while (a < s.size() && std::isspace((unsigned char)s[a]))
@@ -32,6 +51,11 @@ static std::string trim(const std::string &s) {
   return s.substr(a, b - a);
 }
 
+/**
+ * @brief Loads environment variables from a .env file.
+ * @param path The path to the .env file.
+ * @return A map containing key-value pairs of environment variables.
+ */
 std::map<std::string, std::string> load_dotenv(const fs::path &path) {
   std::map<std::string, std::string> env;
   std::ifstream in(path);
@@ -57,9 +81,15 @@ std::map<std::string, std::string> load_dotenv(const fs::path &path) {
 }
 
 // -------------------- Base64 --------------------
+
 static const std::string b64_chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
+/**
+ * @brief Decodes a Base64 encoded string.
+ * @param in The Base64 encoded string.
+ * @return The decoded string.
+ */
 std::string base64_decode(const std::string &in) {
   std::vector<int> T(256, -1);
   for (int i = 0; i < 64; ++i)
@@ -83,6 +113,15 @@ std::string base64_decode(const std::string &in) {
 }
 
 // -------------------- CURL helpers --------------------
+
+/**
+ * @brief Callback function for writing received data from cURL.
+ * @param contents Pointer to the received data.
+ * @param size Size of each element.
+ * @param nmemb Number of elements.
+ * @param userp User pointer (destination string).
+ * @return Total size of the received data.
+ */
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb,
                             void *userp) {
   std::string *s = static_cast<std::string *>(userp);
@@ -90,6 +129,9 @@ static size_t WriteCallback(void *contents, size_t size, size_t nmemb,
   return size * nmemb;
 }
 
+/**
+ * @brief Wrapper struct for cURL handle management.
+ */
 struct CurlHandle {
   CURL *curl;
   CurlHandle() { curl = curl_easy_init(); }
@@ -99,12 +141,21 @@ struct CurlHandle {
   }
 };
 
+/**
+ * @brief Struct to hold HTTP request results.
+ */
 struct HttpResult {
   long http_code = 0;
   std::string body;
   CURLcode curl_code = CURLE_OK;
 };
 
+/**
+ * @brief Performs a raw HTTP GET request.
+ * @param url The target URL.
+ * @param token Optional GitHub API token.
+ * @return An HttpResult containing the response.
+ */
 HttpResult http_get_raw_with_status(const std::string &url,
                                     const std::string &token = "") {
   HttpResult res;
@@ -134,6 +185,12 @@ HttpResult http_get_raw_with_status(const std::string &url,
   return res;
 }
 
+/**
+ * @brief Performs an HTTP GET request and parses the response as JSON.
+ * @param url The target URL.
+ * @param token Optional GitHub API token.
+ * @return An optional JSON object if successful, std::nullopt otherwise.
+ */
 std::optional<json> http_get_json(const std::string &url,
                                   const std::string &token = "") {
   auto r = http_get_raw_with_status(url, token);
@@ -161,6 +218,12 @@ std::optional<json> http_get_json(const std::string &url,
 }
 
 // -------------------- Header parsing --------------------
+
+/**
+ * @brief Parses the YAML-like Front Matter from a Markdown string.
+ * @param text The Markdown content.
+ * @return A map containing key-value pairs from the Front Matter.
+ */
 std::map<std::string, std::string> parse_front_matter(const std::string &text) {
   // Expects YAML-like header between '---' at the beginning and the next
   // '---'
@@ -212,6 +275,13 @@ std::map<std::string, std::string> parse_front_matter(const std::string &text) {
 }
 
 // -------------------- Main --------------------
+
+/**
+ * @brief Main entry point of the application.
+ * @param argc Argument count.
+ * @param argv Argument vector.
+ * @return 0 on success, 1 on failure.
+ */
 int main(int argc, char **argv) {
   curl_global_init(CURL_GLOBAL_DEFAULT);
 

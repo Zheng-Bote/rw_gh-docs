@@ -1,0 +1,2 @@
+template=/home/zb_bamboo/DEV/__NEW__/CPP/rw_gh-docs/assets4/template.html
+output=/home/zb_bamboo/DEV/__NEW__/CPP/rw_gh-docs/dist4

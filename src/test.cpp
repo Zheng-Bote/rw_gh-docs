@@ -1,3 +1,22 @@
+/*
+ * SPDX-License-Identifier: MIT
+ * Author: Robert Zheng
+ * Copyright (c) 2026 ZHENG Robert
+ */
+
+/**
+ * @file test.cpp
+ * @brief Documentation Auto-Updater Bot
+ *
+ * This utility iterates through `.md` files in the docs/ folder of a GitHub
+ * repository, appends a marker to the content, and commits the changes back via
+ * the GitHub API.
+ *
+ * Dependencies:
+ * - libcurl (Network requests)
+ * - nlohmann/json (JSON parsing)
+ */
+
 #include <curl/curl.h>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -14,6 +33,11 @@ static const std::string base64_chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
                                         "abcdefghijklmnopqrstuvwxyz"
                                         "0123456789+/";
 
+/**
+ * @brief Encodes a string to Base64.
+ * @param in The input string.
+ * @return The Base64 encoded string.
+ */
 std::string base64_encode(const std::string &in) {
   std::string out;
   int val = 0, valb = -6;
@@ -35,12 +59,22 @@ std::string base64_encode(const std::string &in) {
 // ------------------------------------------------------------
 // HTTP Helper
 // ------------------------------------------------------------
+
+/**
+ * @brief Write callback for cURL.
+ */
 static size_t WriteCallback(void *contents, size_t size, size_t nmemb,
                             std::string *s) {
   s->append((char *)contents, size * nmemb);
   return size * nmemb;
 }
 
+/**
+ * @brief Performs a raw HTTP GET request.
+ * @param url Target URL.
+ * @param token GitHub API Token.
+ * @return Response body.
+ */
 std::string http_get_raw(const std::string &url,
                          const std::string &token = "") {
   CURL *curl = curl_easy_init();
@@ -64,10 +98,23 @@ std::string http_get_raw(const std::string &url,
   return response;
 }
 
+/**
+ * @brief Performs an HTTP GET request and returns JSON.
+ * @param url Target URL.
+ * @param token GitHub API Token.
+ * @return JSON response.
+ */
 json http_get_json(const std::string &url, const std::string &token = "") {
   return json::parse(http_get_raw(url, token));
 }
 
+/**
+ * @brief Performs an HTTP PUT request with JSON body.
+ * @param url Target URL.
+ * @param body JSON body.
+ * @param token GitHub API Token.
+ * @return JSON response.
+ */
 json http_put_json(const std::string &url, const json &body,
                    const std::string &token) {
   CURL *curl = curl_easy_init();
@@ -96,6 +143,11 @@ json http_put_json(const std::string &url, const json &body,
 // ------------------------------------------------------------
 // Main Program
 // ------------------------------------------------------------
+
+/**
+ * @brief Main entry point for the bot.
+ * @return Exit code.
+ */
 int main() {
   const std::string user = "<USER>";
   const std::string repo = "<REPO>";
