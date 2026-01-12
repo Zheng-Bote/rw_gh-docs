@@ -19,15 +19,18 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libmd4c-dev nlohmann-json3-dev wget lsb-release software-properties-common gnupg pkg-config
+          sudo apt-get install -y libmd4c-dev nlohmann-json3-dev wget lsb-release software-properties-common gnupg pkg-config cmake ninja-build
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 21 all
 
-      - name: Compile SSG5
+      - name: Configure CMake
         run: |
-          clang++-21 -std=c++23 -o ssg5 src/main5.cpp -Iinclude $(pkg-config --cflags --libs md4c-html md4c)
-          chmod +x ssg5
+          cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++-21
+
+      - name: Build SSG5
+        run: |
+          cmake --build build --target ssg5
 
       - name: Create Config
         run: |
@@ -36,7 +39,7 @@ jobs:
 
       - name: Run Static Site Generator
         run: |
-          ./ssg5 config.cfg input
+          ./build/ssg5 config.cfg input
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4

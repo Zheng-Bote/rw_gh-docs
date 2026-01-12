@@ -24,6 +24,11 @@ FetchContent_MakeAvailable(nlohmann_json)
 # libcurl via find_package (System-abhängig)
 find_package(CURL REQUIRED)
 
+# Find md4c and md4c-html via pkg-config
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(MD4C REQUIRED md4c md4c-html)
+
+# Existing target
 add_executable(gh_docs_bot
     src/main.cpp
 )
@@ -31,5 +36,19 @@ add_executable(gh_docs_bot
 target_include_directories(gh_docs_bot PRIVATE ${CURL_INCLUDE_DIRS})
 target_link_libraries(gh_docs_bot PRIVATE CURL::libcurl nlohmann_json::nlohmann_json)
 
+# New SSG5 target
+add_executable(ssg5
+    src/main5.cpp
+)
+
+# Include directories (local include for inja.hpp)
+target_include_directories(ssg5 PRIVATE include)
+
+# Link libraries (nlohmann_json and md4c)
+target_link_libraries(ssg5 PRIVATE 
+    nlohmann_json::nlohmann_json 
+    ${MD4C_LIBRARIES}
+)
+
 # Install rule (optional)
-install(TARGETS gh_docs_bot RUNTIME DESTINATION bin)
+install(TARGETS gh_docs_bot ssg5 RUNTIME DESTINATION bin)
