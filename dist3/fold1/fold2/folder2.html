@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GHP | Grid Terminal</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;500&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+    :root {
+  --tron-cyan: oklch(0.75 0.18 210);
+  --tron-glow: oklch(0.75 0.18 210 / 0.3);
+  --ob-white: oklch(0.98 0.01 210);
+  --ob-glass: oklch(1 0 0 / 0.04);
+  --primary-bg: #000206;
+  --font-main: "Inter", system-ui, sans-serif;
+  --font-tron: "Orbitron", sans-serif;
+  --border-glow: 1px solid var(--tron-glow);
+  --glass-blur: blur(12px);
+  --border-radius: 12px;
+}
+
+html {
+  height: 100%;
+  font-family: var(--font-main);
+  background-color: var(--primary-bg);
+  color: var(--ob-white);
+  background-image: linear-gradient(var(--tron-glow) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tron-glow) 1px, transparent 1px);
+  background-size: 60px 60px;
+  background-attachment: fixed;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  display: grid;
+  grid-template-areas: "header" "aside" "main" "footer"; /* Reihenfolge für Mobile angepasst */
+  grid-template-rows: 80px auto 1fr auto;
+}
+
+header,
+footer {
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  backdrop-filter: var(--glass-blur);
+  background: var(--ob-glass);
+}
+
+header {
+  grid-area: header;
+  border-bottom: var(--border-glow);
+}
+footer {
+  grid-area: footer;
+  height: 60px;
+  border-top: var(--border-glow);
+  font-family: var(--font-tron);
+  color: var(--tron-cyan);
+  font-size: 0.7rem;
+}
+
+.header_left,
+.footer-section_left {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+.header_middle,
+.footer-section_center {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.header_right,
+.footer-section_right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+header h1 {
+  font-family: var(--font-tron);
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  color: var(--tron-cyan);
+  margin-left: 15px;
+  text-shadow: 0 0 10px var(--tron-glow);
+}
+
+.tron-btn,
+.nav a {
+  display: inline-block;
+  padding: 8px 18px;
+  background: transparent;
+  border: 1px solid var(--tron-cyan);
+  color: var(--tron-cyan);
+  font-family: var(--font-tron);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.tron-btn:hover,
+.nav a:hover {
+  background: var(--tron-cyan);
+  color: #000;
+  box-shadow: 0 0 15px var(--tron-cyan);
+}
+
+/* --- ASIDE NAV (Mobile: Zentriert nebeneinander) --- */
+aside {
+  grid-area: aside;
+  padding: 15px;
+  background: var(--ob-glass);
+  border-bottom: var(--border-glow);
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap; /* Erlaubt Zeilenumbruch bei vielen Buttons */
+  justify-content: center; /* Horizontale Zentrierung */
+  gap: 10px; /* Abstand zwischen den Buttons */
+}
+
+.nav-list li {
+  margin-bottom: 0; /* Margin für Mobile entfernt */
+}
+
+main {
+  grid-area: main;
+  margin: 15px;
+  padding: 25px;
+  background: oklch(1 0 0 / 0.02);
+  backdrop-filter: var(--glass-blur);
+  border: var(--border-glow);
+  border-radius: var(--border-radius);
+}
+
+main h3 {
+  font-family: var(--font-tron);
+  color: var(--tron-cyan);
+  margin-bottom: 15px;
+}
+.active {
+
+  background: var(--tron-cyan);
+  color: #000;
+  box-shadow: 0 0 15px var(--tron-cyan);
+
+}
+
+/* --- DESKTOP LAYOUT --- */
+@media screen and (min-width: 1024px) {
+  body {
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 80px 1fr auto;
+    grid-template-areas:
+      "header header"
+      "aside main"
+      "footer footer";
+    max-width: 1600px;
+    margin: auto;
+  }
+
+  aside {
+    border-bottom: none;
+    border-right: var(--border-glow);
+    padding: 20px;
+  }
+
+  .nav-list {
+    flex-direction: column; /* Vertikal auf Desktop */
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  /* Hierarchie-Einrückung nur auf Desktop */
+  .nav-list li:nth-child(n+5):nth-child(-n+7),  /* Arch1-3 */
+  .nav-list li:nth-child(n+9):nth-child(-n+11) {
+    /* Dev1-3 */
+    margin-left: 25px;
+  }
+}
+
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header_left">
+        <h1>GHP</h1>
+      </div>
+      <div class="header_middle">
+        <span>System Status: Active</span>
+      </div>
+      <div class="header_right">
+        <button class="tron-btn">Login</button>
+        <button class="tron-btn" style="margin-left: 10px">Sync</button>
+      </div>
+    </header>
+
+
+<aside class="aside">
+  <nav class="nav">
+<ul class="nav-list">
+  <li><a href="../../readme.html">readme</a></li>
+  <li><strong>fold1</strong>
+<ul class="nav-list">
+  <li><a href="../../fold1/fold1.htm">fold1</a></li>
+  <li><a href="../../fold1/folder1.html">folder1</a></li>
+  <li><strong>fold2</strong>
+<ul class="nav-list">
+  <li><a href="../../fold1/fold2/fold2.htm">fold2</a></li>
+  <li><a href="../../fold1/fold2/folder2.html" class="active">folder2</a></li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li><strong>fold3</strong>
+<ul class="nav-list">
+  <li><a href="../../fold3/anfang.htm">anfang</a></li>
+  <li><a href="../../fold3/section.htm">section</a></li>
+</ul>
+  </li>
+</ul>
+  </nav>
+</aside>
+
+<main class="main">
+<h1>folder2 md</h1>
+<p>das ist folder 2 md</p>
+
+</main>
+<footer class="footer">
+      <div class="footer-section_left">SOURCE: MCP_v2</div>
+      <div class="footer-section_center">&copy; 2026 ZHENG ROBERT</div>
+      <div class="footer-section_right">CLEARANCE_LEVEL: 5</div>
+    </footer>
+  </body>
+</html>

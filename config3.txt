@@ -1,0 +1,3 @@
+header=/home/zb_bamboo/DEV/__NEW__/CPP/rw_gh-docs/assets3/header.html
+footer=/home/zb_bamboo/DEV/__NEW__/CPP/rw_gh-docs/assets3/footer.html
+output=/home/zb_bamboo/DEV/__NEW__/CPP/rw_gh-docs/dist3
