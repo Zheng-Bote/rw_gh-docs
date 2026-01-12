@@ -3,6 +3,9 @@ name: Security Analysis (Atom/CDXGen)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
@@ -25,14 +28,22 @@ jobs:
 
       - name: Run Atom Analysis
         run: |
-          atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp ./src
+          atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp /src
 
       - name: Run CDXGen
         run: |
-          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r ./src
+          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r /src
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: security-reports
           path: docs/
+
+      - name: Commit and Push SBOM
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/sbom_v2.1.0.json docs/atom_v2.1.0.json
+          git commit -m "Security: Update SBOM and Atom slice [skip ci]" || echo "No changes to commit"
+          git push
