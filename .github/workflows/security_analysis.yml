@@ -14,6 +14,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
+
       - name: Setup Node.js v24
         uses: actions/setup-node@v4
         with:
@@ -28,11 +34,11 @@ jobs:
 
       - name: Run Atom Analysis
         run: |
-          atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp /src
+          atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp ./src
 
       - name: Run CDXGen
         run: |
-          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r /src
+          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r ./src
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
