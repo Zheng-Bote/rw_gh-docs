@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: MIT
  * Author: Robert Zheng
  * Copyright (c) 2026 ZHENG Robert
+ * Version: 1.0.0
+ * Description: Static Site Generator (Version 5 with Asset Management)
  */
 
 /**
