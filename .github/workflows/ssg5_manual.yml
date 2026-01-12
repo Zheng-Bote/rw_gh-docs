@@ -19,11 +19,11 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libmd4c-dev nlohmann-json3-dev libinja-dev
+          sudo apt-get install -y libmd4c-dev nlohmann-json3-dev
 
       - name: Compile SSG5
         run: |
-          g++ -std=c++23 -o ssg5 src/main5.cpp -lmd4c-html -lmd4c
+          g++ -std=c++23 -o ssg5 src/main5.cpp -Iinclude -lmd4c-html -lmd4c
           chmod +x ssg5
 
       - name: Create Config
