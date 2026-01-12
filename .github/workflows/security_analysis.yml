@@ -1,5 +1,16 @@
 name: Security Analysis (Atom/CDXGen)
 
+# Author: Robert Zheng
+# created: 2026-01-12
+# updated: 2026-01-12
+# version: 1.0.0
+
+# creates a docs/ folder with the SBOM and Atom slice
+# commits the SBOM and Atom slice to the repository
+# uploads the SBOM and Atom slice as an artifact
+
+run-name: Security Analysis (Atom/CDXGen SBoM) by ${{ github.actor }}
+
 on:
   workflow_dispatch:
 
@@ -37,8 +48,10 @@ jobs:
           atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp ./src
 
       - name: Run CDXGen
+        env:
+          FETCH_LICENSE: true
         run: |
-          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r ./src
+          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --version "1.0.0" --group "net.hase-zheng" --name "rw_gh-docs" --deep -r ./src
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

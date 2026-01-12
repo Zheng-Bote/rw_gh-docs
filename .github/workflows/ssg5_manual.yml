@@ -1,5 +1,11 @@
 name: Manual SSG5 Build
 
+# Author: Robert Zheng
+# created: 2026-01-12
+# updated: 2026-01-12
+# version: 1.0.0
+# description: build and generate static website from markdown files to branch gh-pages
+
 run-name: Manual SSG5 Build
 
 on:
