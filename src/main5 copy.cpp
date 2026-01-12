@@ -25,6 +25,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+// ... (content replaced in chunks)
 #include <ranges>
 #include <string>
 #include <vector>
@@ -107,7 +108,7 @@ void copyAssets(const fs::path &templatePath, const fs::path &outputRoot) {
   fs::path destAssets = outputRoot / "assets";
 
   if (fs::exists(sourceAssets) && fs::is_directory(sourceAssets)) {
-    std::cout << "Found assets folder: " << sourceAssets.string() << std::endl;
+    std::println("Found assets folder: {}", sourceAssets.string());
 
     try {
       // Create directories
@@ -118,14 +119,13 @@ void copyAssets(const fs::path &templatePath, const fs::path &outputRoot) {
                fs::copy_options::recursive |
                    fs::copy_options::overwrite_existing);
 
-      std::cout << "Assets successfully copied to: " << destAssets.string()
-                << std::endl;
+      std::println("Assets successfully copied to: {}", destAssets.string());
     } catch (const fs::filesystem_error &e) {
-      std::cerr << "Error copying assets: " << e.what() << std::endl;
+      std::println(stderr, "Error copying assets: {}", e.what());
     }
   } else {
-    std::cout << "No assets folder found at: " << sourceAssets.string()
-              << " (skipping copy)" << std::endl;
+    std::println("No assets folder found at: {} (skipping copy)",
+                 sourceAssets.string());
   }
 }
 
@@ -321,10 +321,9 @@ void processFiles(const DirNode &currentNode, const DirNode &rootNode,
     try {
       std::string finalResult = env.render(tmpl, data);
       writeFile(outputPath, finalResult);
-      std::cout << "Created: " << outputPath.string() << std::endl;
+      std::println("Created: {}", outputPath.string());
     } catch (const std::exception &e) {
-      std::cerr << "Template Error in " << file.string() << ": " << e.what()
-                << std::endl;
+      std::println(stderr, "Template Error in {}: {}", file.string(), e.what());
     }
   }
 
@@ -338,8 +337,7 @@ void processFiles(const DirNode &currentNode, const DirNode &rootNode,
  */
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    std::cerr << "Usage: " << argv[0] << " <path_to_config> <input_folder>"
-              << std::endl;
+    std::println(stderr, "Usage: {} <path_to_config> <input_folder>", argv[0]);
     return 1;
   }
 
@@ -354,7 +352,7 @@ int main(int argc, char *argv[]) {
     if (!fs::exists(cfg.templatePath))
       throw std::runtime_error("Template file does not exist.");
 
-    std::cout << "Scanning structure (.md only)..." << std::endl;
+    std::println("Scanning structure (.md only)...");
     DirNode rootNode = buildTree(inputDir, inputDir);
 
     if (fs::exists(cfg.outputDir))
@@ -365,17 +363,17 @@ int main(int argc, char *argv[]) {
     // Copies assets from the folder where template.html is located
     copyAssets(cfg.templatePath, cfg.outputDir);
 
-    std::cout << "Loading template..." << std::endl;
+    std::println("Loading template...");
     inja::Environment env;
     inja::Template tmpl = env.parse_template(cfg.templatePath.string());
 
-    std::cout << "Generating pages with Inja..." << std::endl;
+    std::println("Generating pages with Inja...");
     processFiles(rootNode, rootNode, inputDir, cfg, env, tmpl);
 
-    std::cout << "Done! Output in: " << cfg.outputDir.string() << std::endl;
+    std::println("Done! Output in: {}", cfg.outputDir.string());
 
   } catch (const std::exception &e) {
-    std::cerr << "Error: " << e.what() << std::endl;
+    std::println(stderr, "Error: {}", e.what());
     return 1;
   }
 
