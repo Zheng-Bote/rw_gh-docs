@@ -24,9 +24,13 @@ FetchContent_MakeAvailable(nlohmann_json)
 # libcurl via find_package (System-abhängig)
 find_package(CURL REQUIRED)
 
-# Find md4c and md4c-html via pkg-config
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(MD4C REQUIRED md4c md4c-html)
+# md4c via FetchContent
+FetchContent_Declare(
+  md4c
+  GIT_REPOSITORY https://github.com/mity/md4c.git
+  GIT_TAG release-0.5.2
+)
+FetchContent_MakeAvailable(md4c)
 
 # Existing target
 add_executable(gh_docs_bot
@@ -44,10 +48,10 @@ add_executable(ssg5
 # Include directories (local include for inja.hpp)
 target_include_directories(ssg5 PRIVATE include)
 
-# Link libraries (nlohmann_json and md4c)
+# Link libraries (nlohmann_json and md4c targets)
 target_link_libraries(ssg5 PRIVATE 
     nlohmann_json::nlohmann_json 
-    ${MD4C_LIBRARIES}
+    md4c-html md4c
 )
 
 # Install rule (optional)
