@@ -1,0 +1,38 @@
+name: Security Analysis (Atom/CDXGen)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js v24
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Tools
+        run: |
+          npm install -g @appthreat/atom @cyclonedx/cdxgen
+
+      - name: Prepare Output Directory
+        run: mkdir -p docs
+
+      - name: Run Atom Analysis
+        run: |
+          atom -J-Xmx16g usages -o ./docs/app.atom --slice-outfile ./docs/atom_v2.1.0.json -l cpp ./src
+
+      - name: Run CDXGen
+        run: |
+          cdxgen -o ./docs/sbom_v2.1.0.json -t cpp --usages-slices-file ./docs/atom_v2.1.0.json --author "ZHENG Robert" --deep -r ./src
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: docs/
