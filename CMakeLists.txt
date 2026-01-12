@@ -45,8 +45,11 @@ add_executable(ssg5
     src/main5.cpp
 )
 
-# Include directories (local include for inja.hpp)
-target_include_directories(ssg5 PRIVATE include)
+# Include directories (local include for inja.hpp, and md4c headers)
+target_include_directories(ssg5 PRIVATE 
+    include
+    ${md4c_SOURCE_DIR}/src
+)
 
 # Link libraries (nlohmann_json and md4c targets)
 target_link_libraries(ssg5 PRIVATE 
