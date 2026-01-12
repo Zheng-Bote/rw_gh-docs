@@ -1,3 +1,16 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [Readme](#readme)
+  - [Headline 2](#headline-2)
+    - [Headline 3](#headline-3)
+      - [Headline 4](#headline-4)
+        - [Headline 5](#headline-5)
+          - [Headline 6](#headline-6)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # Readme
 
 das ist eine Readme.md

@@ -1,3 +1,18 @@
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+**Table of Contents**
+
+- [C++ Documentation Tools](#c-documentation-tools)
+  - [Components](#components)
+    - [1. GitHub Docs Fetcher (`src/main.cpp`)](#1-github-docs-fetcher-srcmaincpp)
+    - [2. Static Site Generator (`src/main2.cpp`)](#2-static-site-generator-srcmain2cpp)
+    - [3. Docs Updater Bot (`src/test.cpp`)](#3-docs-updater-bot-srctestcpp)
+  - [Requirements](#requirements)
+  - [Building](#building)
+  - [Setup](#setup)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
 # C++ Documentation Tools
 
 This repository contains a set of C++ tools designed for managing, fetching, and generating documentation from GitHub repositories.
